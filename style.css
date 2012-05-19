@@ -11,7 +11,7 @@ a:visited,active {color:#666666;}
 .hide {display:none;}
 /*Header*/
 #topbar {}
-#divFix{position: fixed !important;top: 0;right: 0; left: 0;background-color: #336699; height: 110px;}
+#divFix{position: fixed !important;top: 0;right: 0; left: 0;background-color: #336699; height: 120px;}
 #topbar #TopSection {margin:auto;}
 #sitename {display:block; height:40px; float:left; padding:3px; font:Georgia, "Times New Roman", Times, serif; font-size:30px; font-weight:normal; color:#FFFFCC;}
 #sitename span {text-transform:lowercase; font-style:italic; color:#D1DDED; font-size:34px;}
