@@ -6,6 +6,6 @@ include_once(ABSPATH.'/../../simplehtmldom/simple_html_dom.php');
 include_once(ABSPATH.'../../class.scraper_autovit.php');
 
 $s = new Scraper();
-$s->scrapePaginaDetaliu("http://www.autovit.ro/honda-rc-M2271330.html");
+$s->pornesteScraperDetalii();
 
 ?>

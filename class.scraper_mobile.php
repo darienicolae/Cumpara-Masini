@@ -7,9 +7,10 @@ class Scraper2 {
 	
 	var $table_queue = 'scraper_queue2';
 	var $table_cars = 'masini';
-	var $limita_anunturi = 1000;
-	var $limita_nr_pagini = 100;
-	var $limita_verificare = 1000;
+	var $table_duplicate = 'duplicate';
+	var $limita_anunturi = 20;
+	var $limita_nr_pagini = 10;
+	var $limita_verificare = 30;
 	var $alreadyInDB = false;
 	
 	function __construct() {
@@ -58,7 +59,7 @@ class Scraper2 {
 			{
 				break;
 			}
-			$this->scrapeForURLs($url);
+			$this->scrapeForURLs($url, $nr);
 		}
 		
 		
@@ -67,25 +68,32 @@ class Scraper2 {
 	function pornesteScraperOlderURLs() {										//  ok
 		
 		// vezi la ce pagina a ramas
-		$result = mysql_fetch_array(mysql_query("SELECT pagina FROM $this->table_queue WHERE vazut=1 ORDER BY pagina DESC LIMIT 1"));
+		$result = mysql_fetch_array(mysql_query("SELECT pagina FROM `$this->table_queue` ORDER BY pagina DESC LIMIT 1"));
 		
 		// parseaza $limita_nr_pagini in total
 		$nr=1;
-		$delay=0;
-		while ($nr <= $this->limita_nr_pagini + $delay) {
-			$delay=0;
-			$nr_pag = $nr+$result['pagina'];
-			$url = 'http://cautare.mobile.ro/automobile/search.html?useCase=SearchResult&pageNumber='.$nr_pag.'&__lp=1759&scopeId=C&sortOption.sortBy=creationTime&sortOption.sortOrder=DESCENDING&makeModelVariant1.searchInFreetext=false&makeModelVariant2.searchInFreetext=false&makeModelVariant3.searchInFreetext=false&ambitCountry=RO&siteId=ROMANIA&negativeFeatures=EXPORT&lang=ro';
+		//$delay=0;
+		
+		while ($nr <= $this->limita_nr_pagini) {
+		
+			$nr_pagina=$nr+$result['pagina'];
+			//$delay=0;
+			$url = 'http://cautare.mobile.ro/automobile/search.html?useCase=SearchResult&pageNumber='.$nr_pagina.'&__lp=1759&scopeId=C&sortOption.sortBy=creationTime&sortOption.sortOrder=DESCENDING&makeModelVariant1.searchInFreetext=false&makeModelVariant2.searchInFreetext=false&makeModelVariant3.searchInFreetext=false&ambitCountry=RO&siteId=ROMANIA&negativeFeatures=EXPORT&lang=ro';
 			
+			$this->scrapeForURLs($url, $nr_pagina);
+			/*
+							echo ';;;;;'.$nr_pagina.';;;;;';
 			if ($this->alreadyInDB != true)
 			{
+			echo 'ok3';
 				$this->alreadyInDB = false;
-				$this->scrapeForURLs($url);
+				echo ';;;;;'.$nr_pagina.';;;;;';
+				$this->scrapeForURLs($url, $nr_pagina);
 			}
 			else
 			{
-				$delay=1;
-			}
+				//$delay=1;
+			}*/
 			
 			$nr++;
 		}
@@ -93,7 +101,7 @@ class Scraper2 {
 		
 	}
 	
-	function scrapeForURLs($url_page) {										//  ok
+	function scrapeForURLs($url_page, $nr) {										//  ok
 		
 		$ret = array();
 		$html = file_get_html($url_page);
@@ -111,7 +119,7 @@ class Scraper2 {
 			if (!$this->verificaCodMasina($item['id']))
 			{
 				echo '|';
-				$this->insertURL($item['id'], $item['nume_masina'], $url_page);
+				$this->insertURL($item['id'], $item['nume_masina'], $nr);
 			}
 			else
 			{
@@ -250,7 +258,9 @@ class Scraper2 {
 		//  contact vanzator
 		
 		$htmlVanzator = file_get_html($url.'4');  //  details tab
-		
+		//echo $htmlVanzator;
+		//die();
+		//$htmlVanzator = str_replace('&nbsp;','',$htmlVanzator);
 		//echo $htmlVanzator->find('div[class=block detailbox]',0)->children(0)->plaintext;
 		//echo '<Br><br><br>';
 		$contact = $htmlVanzator->find('div[class=dealerDetailTabDealerAddress]',0)->plaintext;
@@ -276,7 +286,7 @@ class Scraper2 {
 		}
 		
 		//  Regex localitate
-		$regex = '/[0-9]{6}&nbsp;([a-zA-Z ]*)/';  //  \n[a-zA-Z]*
+		$regex = '/[0-9]{6}&nbsp;([a-zA-Z ]*)/';  //  scoate &nbsp;
 		preg_match_all($regex, $contact, $match, PREG_PATTERN_ORDER);
 		if (isset($match[1][0]))
 		{
@@ -289,12 +299,12 @@ class Scraper2 {
 		}
 		
 		//  Regex telefon
-		$regex = '/(\+40&nbsp;.{3}[[0-9]*\s]*)/';
+		$regex = '/([0-9]{9})/';
 		preg_match_all($regex, $contact, $match, PREG_PATTERN_ORDER);
 		if (isset($match[1][0]))
 		{
-			echo '<br>telefon='.$match[1][0];
-			$ret['telefon1'] = $match[1][0];
+			echo '<br>telefon=0'.$match[1][0];
+			$ret['telefon1'] = '0'.$match[1][0];
 		}
 		else
 		{
@@ -302,6 +312,23 @@ class Scraper2 {
 		}
 		
 		$ret['telefon2'] = "";
+		
+		//- -------------------
+		
+		$regex = '/([0-9]{3}&nbsp;[0-9]{6})/';
+		preg_match_all($regex, $contact, $match, PREG_PATTERN_ORDER);
+		if (isset($match[1][0]))
+		{
+			echo '<br>telefon=0'.$match[1][0];
+			$ret['telefon1'] = '0'.$match[1][0];
+		}
+		else
+		{
+			$ret['telefon1'] = '';
+		}
+		
+		$ret['telefon2'] = "";
+		//  - -------------------
 		
 		
 		$tmp = explode(" ",$nume_masina);
@@ -579,22 +606,46 @@ class Scraper2 {
 		
 		// insereaza masina
 		
-		if ($this->verificaDuplicat($m)) {
-			
-		}
-		
 		$masini = new Masini();
-		$id_masina = $masini->insert($m);
+		if ($this->verificaDuplicat($m) == 0) {
+			$id_masina = $masini->insert($m);
+			// introdu pozele
 		
-		// introdu pozele
-		
-		$i=1;
-		foreach($m['poze'] as $poza) {
-			mysql_query("INSERT INTO imagini (masina_id,url,pozitie) VALUES ('$id_masina','$poza','$i')");
-			$i++;
+			$i=1;
+			foreach($m['poze'] as $poza) {
+				mysql_query("INSERT INTO imagini (masina_id,url,pozitie) VALUES ('$id_masina','$poza','$i')");
+				$i++;
+			}
+		} else {
+			//  
+			echo '------duplicatduplicatduplicatduplicatduplicatduplicatduplicatduplicatduplicatduplicatduplicatduplicatduplicatduplicat-------';
 		}
+		
+		
 		
 		return $m;
+	}
+	
+	 function verificaDuplicat($masina) {
+
+		$conditie = "model_id='$masina[model_id]' AND an_fabricatie='$masina[an_fabricatie]' AND putere='$masina[putere]' AND ABS($masina[kilometraj] - kilometraj) < kilometraj/10 AND ABS($masina[pret] - pret) < pret/10";
+
+		$sql_query = "SELECT * FROM masini WHERE $conditie";
+
+		$sql_query = str_replace("&nbsp", "", $sql_query);
+		$query = mysql_query($sql_query);
+		echo '<Br><br>query: '.$sql_query.'<br><Br>'.mysql_error().'<br><Br><br>a gasit '.mysql_num_rows($query).' rezultate<br><br>';
+		if (mysql_num_rows($query) > 0)
+		{
+			while ($row=mysql_fetch_array($query))
+			{
+				//  Insert into duplicate
+				mysql_query("INSERT INTO duplicate (id_anunt,telefon) VALUES (".$row['id'].",'".$masina[telefon1]."')");
+			}
+		}
+		
+		return mysql_num_rows($query);
+
 	}
 	
 	function verificaStatusAnunt() {										//  ok
@@ -630,20 +681,6 @@ class Scraper2 {
 			return false;
 		}
 	}
-	
-	function verificaDuplicat($masina) {
-		
-		$conditie = "model_id='$masina[model_id]' AND an_fabricatie='$masina[an_fabricatie]' AND putere='$masina[putere]' AND ABS($masina[kilometraj] - kilometraj) < kilometraj/10 AND ABS($masina[pret] - pret) < pret/10";
-		
-		$sql_query = "SELECT * FROM masini WHERE $conditie";
-		
-		
-		$query = mysql_query($sql_query);
-
-		return mysql_num_rows($query);
-	
-	}
-	
 }
 
 ?>
