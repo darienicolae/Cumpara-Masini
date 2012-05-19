@@ -3,7 +3,8 @@ include(dirname(__FILE__) . '/html/header.php');
 ?>
 
 <?php
-if($_GET['submit'] != 'Cauta')
+//die(print_r($_GET));
+if(!isset($_GET['submit_x']))
 {
     header('Location: index.php');
     die();

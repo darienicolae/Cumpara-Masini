@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 include('config.php');
 include('Class.Masini.php');
@@ -173,7 +173,7 @@ class Scraper2 {
 		$html = file_get_html($url.'1');  //  first tab
 		
 		// nu mai e valabil anuntul
-		if (strstr($html->plaintext,"Anunţul solicitat de dvs. nu a putut fi găsit") || strstr($html->plaintext,"Anuntul este inactiv"))
+		if (strstr($html->plaintext,"nu a putut fi") || strstr($html->plaintext,"Anuntul este inactiv"))
 			return false;
 			
 		$nume_masina = $html->find('meta[name=keywords]',0)->content;
@@ -592,22 +592,23 @@ class Scraper2 {
 		
 		echo 'Vanzator id :'.$vanzator_id . '<br>';
 		
-		
-		// scoate unele campuri
-		unset($m['Tara_Vanzator']);
-		unset($m['Oras_Vanzator']);
-		unset($m['telefon1']);
-		unset($m['telefon2']);
-		unset($m['model']);
-		unset($m['marca']);
-		unset($m['Taxa de mediu']);
-		unset($m['Tara de origine']);
-		
+
 		
 		// insereaza masina
 		
 		$masini = new Masini();
 		if ($this->verificaDuplicat($m) == 0) {
+			
+			// scoate unele campuri
+			unset($m['Tara_Vanzator']);
+			unset($m['Oras_Vanzator']);
+			unset($m['telefon1']);
+			unset($m['telefon2']);
+			unset($m['model']);
+			unset($m['marca']);
+			unset($m['Taxa de mediu']);
+			unset($m['Tara de origine']);
+			
 			$id_masina = $masini->insert($m);
 			// introdu pozele
 		
@@ -640,7 +641,11 @@ class Scraper2 {
 			while ($row=mysql_fetch_array($query))
 			{
 				//  Insert into duplicate
-				mysql_query("INSERT INTO duplicate (id_anunt,telefon) VALUES (".$row['id'].",'".$masina[telefon1]."')");
+				$idx = $row['id'];
+				$query = mysql_query("SELECT * FROM duplicate WHERE id_anunt='$idx_'");
+				
+				if (mysql_num_rows($query) == 0)
+					mysql_query("INSERT INTO duplicate (id_anunt,telefon) VALUES (".$row['id'].",'".$masina[telefon1]."')");
 			}
 		}
 		

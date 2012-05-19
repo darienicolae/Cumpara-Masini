@@ -33,7 +33,7 @@ class Masini
      'capacitate_max' => '<=',
      'tip_combustibil' => '=',
      'transmisie' => '=',
-     'numar_usi' => '=',
+     'nr_usi' => '=',
      'culoare' => '=',
      'primul_proprietar' => '=',
      'tva_deductibil' => '=',
@@ -159,6 +159,9 @@ class Masini
 		$tara_inmatriculare_name = ($this->db->select("SELECT * FROM tari WHERE id='$tara_inmatriculare_id'"));
 		$marci = ($this->db->select("SELECT * FROM marci WHERE id='$marci_id'"));
 		$vanzator = ($this->db->select("SELECT * FROM vanzatori WHERE id='$vanzator_id'"));
+		$imagini = $this->db->selectMultiple("SELECT * FROM imagini WHERE masina_id='$masina_id' ORDER BY pozitie");
+		//echo "SELECT * FROM imagini WHERE masina_id='$masina_id' ORDER BY pozitie";
+		
 		$id_tara_vanzator = $vanzator['tara'];
 	    $tara_vanzator_name = ($this->db->select("SELECT * FROM tari WHERE id='$id_tara_vanzator'"));
 		
@@ -167,11 +170,10 @@ class Masini
 		$result['tara_origine']=$tara_origine_name['nume_tara'];
 		$result['tara_inmatriculare']=$tara_inmatriculare_name['nume_tara'];
 		$result['marca']=$marci['nume_marca'];
-		$result['vanzator_nume']=$vanzator['nume'];
-		$result['vanzator_prenume']=$vanzator['prenume'];
 		$result['vanzator_tara']=$tara_vanzator_name['nume_tara'];
 		$result['vanzator_oras']=$vanzator['oras'];
 		$result['vanzator_telefon']=$vanzator['telefon'];
+		$result['imagini'] = $imagini;
 		 
 		return $result;
 	}
@@ -191,15 +193,15 @@ class Masini
 
    	if(!empty($details['tara_vanzator']) && $details['tara_vanzator'] != 'oricare')
    	{
-     	$query = "SELECT * FROM masini, modele, marci, vanzatori WHERE vanzatori.tara='$details[tara_vanzator]' AND vanzatori.id = masini.vanzatori_id AND masini.marci_id = marci.id AND masini.model_id = modele.id AND ";
-        $query2 = "SELECT masini.id 'idul' FROM masini, modele, marci, vanzatori WHERE vanzatori.tara='$details[tara_vanzator]' AND vanzatori.id = masini.vanzatori_id AND masini.marci_id = marci.id AND masini.model_id = modele.id AND ";     	
-     	$query3 = "SELECT count(*) 'nr' FROM masini, modele, marci, vanzatori WHERE vanzatori.tara='$details[tara_vanzator]' AND vanzatori.id = masini.vanzatori_id AND masini.marci_id = marci.id AND masini.model_id = modele.id AND ";
+     	$query = "SELECT * FROM masini, modele, marci, vanzatori, imagini WHERE vanzatori.tara='$details[tara_vanzator]' AND vanzatori.id = masini.vanzatori_id AND masini.marci_id = marci.id AND masini.model_id = modele.id AND imagini.masina_id=masini.id AND imagini.pozitie='1' AND ";
+        $query2 = "SELECT masini.id 'idul' FROM masini, modele, marci, vanzatori, imagini WHERE vanzatori.tara='$details[tara_vanzator]' AND vanzatori.id = masini.vanzatori_id AND masini.marci_id = marci.id AND masini.model_id = modele.id AND imagini.masina_id=masini.id AND imagini.pozitie='1' AND ";     	
+     	$query3 = "SELECT count(*) 'nr' FROM masini, modele, marci, vanzatori, imagini WHERE vanzatori.tara='$details[tara_vanzator]' AND vanzatori.id = masini.vanzatori_id AND masini.marci_id = marci.id AND masini.model_id = modele.id AND imagini.masina_id=masini.id AND imagini.pozitie='1' AND ";
    	}
     else
     {
-    	$query = "SELECT * FROM masini, modele, marci WHERE masini.marci_id = marci.id AND masini.model_id = modele.id AND ";
-        $query2 = "SELECT masini.id 'idul' FROM masini, modele, marci WHERE masini.marci_id = marci.id AND masini.model_id = modele.id AND ";
-    	$query3 = "SELECT count(masini.marci_id) 'nr' FROM masini, modele, marci WHERE masini.marci_id = marci.id AND masini.model_id = modele.id AND ";
+    	$query = "SELECT * FROM masini, modele, marci, imagini WHERE masini.marci_id = marci.id AND masini.model_id = modele.id AND imagini.masina_id=masini.id AND imagini.pozitie='1' AND imagini.masina_id=masini.id AND imagini.pozitie='1' AND ";
+        $query2 = "SELECT masini.id 'idul' FROM masini, modele, marci, imagini WHERE masini.marci_id = marci.id AND masini.model_id = modele.id AND  imagini.masina_id=masini.id AND imagini.pozitie='1' AND ";
+    	$query3 = "SELECT count(masini.marci_id) 'nr' FROM masini, modele, marci, imagini WHERE masini.marci_id = marci.id AND masini.model_id = modele.id AND  imagini.masina_id=masini.id AND imagini.pozitie='1' AND ";
     }
 
 	foreach($this->search_fields as $key=>$value)

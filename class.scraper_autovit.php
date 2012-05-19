@@ -61,7 +61,7 @@ class Scraper {
 			
 			$url = $r['url'].$r['url_masina'];
 			
-			if (!verificaURLMasina($url)) {
+			if (!$this->verificaURLMasina($url)) {
 				$masina = $this->scrapePaginaDetaliu($url);
 				$this->log('Scrape Detaliu : '.$url);
 			}
@@ -158,8 +158,10 @@ class Scraper {
 	
 	function verificaURLMasina($url) {
 		
-		if (mysql_num_rows(mysql_query("SELECT * FROM $this->table_queue WHERE url_autovit LiKE '%$url%'")))
-			return true;
+		$result  = mysql_query("SELECT * FROM $this->table_queue WHERE url_autovit LIKE '%$url%'");
+		
+		if (mysql_num_rows($result))
+				return true;
 			
 		return false;
 		
@@ -448,29 +450,22 @@ class Scraper {
 		$m['vanzatori_id'] = $vanzator_id;
 		
 		echo 'Vanzator id :'.$vanzator_id . '<br>';
+				
 		
-		
-		// scoate unele campuri
-		unset($m['Tara_Vanzator']);
-		unset($m['Oras_Vanzator']);
-		unset($m['telefon1']);
-		unset($m['telefon2']);
-		unset($m['model']);
-		unset($m['marca']);
-		unset($m['Taxa de mediu']);
-		unset($m['Tara de origine']);
-		
-		
-		
-		// verifica duplicatul
-	
-		if ($this->verificaDuplicat($m) == 0) { // nu e duplicat 
-		
-			// insereaza masina
-		
-			$masini = new Masini();
+		$masini = new Masini();
+		if ($this->verificaDuplicat($m) == 0) {
+			
+			// scoate unele campuri
+			unset($m['Tara_Vanzator']);
+			unset($m['Oras_Vanzator']);
+			unset($m['telefon1']);
+			unset($m['telefon2']);
+			unset($m['model']);
+			unset($m['marca']);
+			unset($m['Taxa de mediu']);
+			unset($m['Tara de origine']);
+			
 			$id_masina = $masini->insert($m);
-		
 			// introdu pozele
 		
 			$i=1;
@@ -478,12 +473,16 @@ class Scraper {
 				mysql_query("INSERT INTO imagini (masina_id,url,pozitie) VALUES ('$id_masina','$poza','$i')");
 				$i++;
 			}
-		
-			return $m;
-		
-		}
-		else
+			
+			return true;
+			
+		} else {
+			//  
+			echo '------duplicatduplicatduplicatduplicatduplicatduplicatduplicatduplicatduplicatduplicatduplicatduplicatduplicatduplicat-------';
+			
 			return false;
+			
+		}
 		
 			
 	}
@@ -505,17 +504,30 @@ class Scraper {
 		
 	}
 	
-	function verificaDuplicat($masina) {
-		
-		$conditie = "model_id='$masina[model_id]' AND an_fabricatie='$masina[an_fabricatie]' AND putere='$masina[putere]' AND ABS($masina[kilometraj] - kilometraj) < kilometraj/10 AND ABS($masina[pret] - pret) < pret/10";
-		
-		$sql_query = "SELECT * FROM masini WHERE $conditie";
-		
-		
-		$query = mysql_query($sql_query);
+	 function verificaDuplicat($masina) {
 
+		$conditie = "model_id='$masina[model_id]' AND an_fabricatie='$masina[an_fabricatie]' AND putere='$masina[putere]' AND ABS($masina[kilometraj] - kilometraj) < kilometraj/10 AND ABS($masina[pret] - pret) < pret/10";
+
+		$sql_query = "SELECT * FROM masini WHERE $conditie";
+
+		$sql_query = str_replace("&nbsp", "", $sql_query);
+		$query = mysql_query($sql_query);
+		echo '<Br><br>query: '.$sql_query.'<br><Br>'.mysql_error().'<br><Br><br>a gasit '.mysql_num_rows($query).' rezultate<br><br>';
+		if (mysql_num_rows($query) > 0)
+		{
+			while ($row=mysql_fetch_array($query))
+			{
+				//  Insert into duplicate
+				$idx = $row['id'];
+				$query = mysql_query("SELECT * FROM duplicate WHERE id_anunt='$idx_'");
+				
+				if (mysql_num_rows($query) == 0)
+					mysql_query("INSERT INTO duplicate (id_anunt,telefon) VALUES (".$row['id'].",'".$masina[telefon1]."')");
+			}
+		}
+		
 		return mysql_num_rows($query);
-	
+
 	}
 	
 }

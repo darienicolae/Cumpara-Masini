@@ -28,6 +28,7 @@ if ($rezultat = $masina->getDetails($_GET["id"]))
 ?>
 
 <div style="width: 420px; float: right; font-size: 13px;">
+    <?php //die(print_r($rezultat));  ?>
 <a href="<?php echo $rezultat['imagini'][0]['url'];?>" rel="poze"><img src="<?php echo $rezultat['imagini'][0]['url'];?>" width="400" border="0" alt="Poza"/></a>
 <?php
 $i = 0;
