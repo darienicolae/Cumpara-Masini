@@ -171,9 +171,9 @@ function showHideCautare()
                 ?>
             </select>
                     </td>
-                    <td rowspan="2">
-                                         <input type="submit" value="Cauta" name="submit"/>
-                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                    <td style="text-align: center !important; padding-left: 25px;" rowspan="2">
+                                         <input type="image" src="images/search.png" style="width: 75px;" value="Cauta" name="submit"/>
+                <br/>
                 <a href="#" onclick="showHideCautare();">Cautare avansata</a>
                     </td>
                 </tr>
@@ -468,7 +468,7 @@ function showHideCautare()
         </div>
     </span>
     </form>
-
+<br/><br/>
     
 </div>
 </div>
